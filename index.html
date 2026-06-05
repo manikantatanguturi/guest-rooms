@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>TS Guest Rooms</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -116,8 +117,19 @@ tr:last-child td{border-bottom:none;}
 .empty{text-align:center;padding:2rem;color:var(--muted);font-size:13px;}
 .loading{text-align:center;padding:2rem;color:var(--muted);font-size:13px;}
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--accent);color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
-.toast.show{opacity:1;}
-@media(max-width:480px){
+.toast.show{opacity:1;}.hidden{display:none !important;}
+.auth-container{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg);}
+.auth-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;box-shadow:0 20px 45px rgba(0,0,0,0.08);}
+.auth-header{margin-bottom:1.25rem;text-align:center;}
+.auth-header h2{margin-bottom:0.5rem;font-size:22px;}
+.auth-header p{color:var(--muted);font-size:14px;}
+.auth-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:1rem;flex-wrap:wrap;}
+.auth-toggle{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none;}
+.auth-message{margin-top:1rem;font-size:13px;color:var(--red);min-height:18px;}
+.user-bar{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+.user-name{font-size:12px;color:white;opacity:0.85;}
+.role-badge{display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.18);color:white;font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}
+.auth-btn{width:100%;}@media(max-width:480px){
   .metrics{grid-template-columns:repeat(2,1fr);}
   .form-grid{grid-template-columns:1fr;}
   .form-full{grid-column:1;}
@@ -127,15 +139,54 @@ tr:last-child td{border-bottom:none;}
 </head>
 <body>
 
+<div id="authContainer" class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Welcome Back</h2>
+      <p>Login to manage bookings and rooms.</p>
+    </div>
+    <div id="loginView">
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter your password"></div>
+      <div class="modal-footer"><button class="btn btn-primary auth-btn" onclick="login()">Login</button></div>
+      <div class="auth-footer"><span>Don't have an account?</span><a href="#" onclick="showRegisterView(); return false;" class="auth-toggle">Register</a></div>
+    </div>
+    <div id="registerView" class="hidden">
+      <div class="field"><label>Full Name</label><input type="text" id="registerName" placeholder="e.g. Ravi Kumar"></div>
+      <div class="field"><label>Email</label><input type="email" id="registerEmail" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="registerPassword" placeholder="Minimum 6 characters"></div>
+      <div class="modal-footer"><button class="btn btn-primary auth-btn" onclick="register()">Register</button></div>
+      <div class="auth-footer"><span>Already have an account?</span><a href="#" onclick="showLoginView(); return false;" class="auth-toggle">Login</a></div>
+    </div>
+    <div id="authMessage" class="auth-message"></div>
+  </div>
+</div>
+
+<div id="pendingContainer" class="auth-container hidden">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h2>Account Pending Approval</h2>
+      <p>Your account is waiting for approval from an administrator. Please contact management.</p>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary auth-btn" onclick="returnToLogin()">Return to Login</button></div>
+  </div>
+</div>
+
+<div id="appContainer">
 <header>
   <div class="logo">
     <h1>🏨 TS Guest Rooms</h1>
     <span>Allagadda, Nandyal District, AP</span>
   </div>
+  <div id="userBar" class="user-bar hidden">
+    <span id="currentUserName" class="user-name"></span>
+    <span id="currentUserRoleBadge" class="role-badge"></span>
+  </div>
   <nav class="nav">
     <button id="btn-dashboard" onclick="showView('dashboard')">Home</button>
     <button id="btn-bookings" onclick="showView('bookings')">Bookings</button>
     <button id="btn-collections" onclick="showView('collections')">Collections</button>
+    <button id="btn-logout" class="btn btn-sm" style="display:none;" onclick="logout()">Logout</button>
   </nav>
 </header>
 
@@ -147,6 +198,26 @@ tr:last-child td{border-bottom:none;}
       <div class="metric"><div class="metric-label">Available</div><div class="metric-value green" id="m-available">…</div></div>
       <div class="metric"><div class="metric-label">Occupied</div><div class="metric-value red" id="m-occupied">…</div></div>
       <div class="metric"><div class="metric-label">Cleaning</div><div class="metric-value amber" id="m-cleaning">…</div></div>
+    </div>
+    <div id="adminPanel" class="card hidden">
+      <div class="card-header">
+        <span class="card-title">Admin Panel</span>
+        <small style="color:var(--muted);font-size:11px;">Pending Staff Requests</small>
+      </div>
+      <div id="adminPanelEmpty" class="empty">No pending staff requests.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Registration Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="pendingUsersBody"></tbody>
+        </table>
+      </div>
     </div>
     <div class="card">
       <div class="card-header">
@@ -849,10 +920,12 @@ var firebaseConfig = {
 document.getElementById('btn-dashboard').classList.add('active');
 window.addEventListener('load', function(){ var el=document.getElementById('bookingDateFilter'); if(el) el.value=todayStr();});
 </script>
+</div>
 
 <!-- Firebase compat SDKs (loaded AFTER functions defined above) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
   firebase.initializeApp(firebaseConfig);
   var db = firebase.firestore();
@@ -885,5 +958,7 @@ window.addEventListener('load', function(){ var el=document.getElementById('book
     document.getElementById('bookingsTableWrap').style.display = 'block';
   });
 </script>
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>
