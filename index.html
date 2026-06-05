@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>TS Guest Rooms</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -18,8 +20,11 @@
   --blue:#1A3A5C;--blue-bg:#D6E8F8;
   --radius:10px;--radius-lg:16px;
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;padding-top:env(safe-area-inset-top);} 
-header{background:var(--accent);color:white;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;padding-top:env(safe-area-inset-top);}
+/* safe-area support for mobile home-screen / standalone mode */
+:root{--safe-top:env(safe-area-inset-top, 0px);--safe-bottom:env(safe-area-inset-bottom, 0px);} 
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);} 
+header{background:var(--accent);color:white;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:fixed;top:0;left:0;right:0;z-index:100;padding-top:calc(var(--safe-top));height:calc(56px + var(--safe-top));}
+main{padding-top:calc(56px + var(--safe-top) + 0.75rem);}
 .logo h1{font-size:15px;font-weight:600;line-height:1.2;}
 .logo span{font-size:10px;opacity:0.7;}
 .nav{display:flex;gap:4px;}
