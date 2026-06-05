@@ -72,6 +72,7 @@ function showAuthContainer() {
     appContainer.classList.add('hidden');
   }
   hidePendingApprovalScreen();
+  ensureStandaloneNav();
   updateUserBadge();
 }
 
@@ -91,7 +92,21 @@ function showAppContainer() {
     logoutBtn.style.display = 'inline-flex';
   }
   hidePendingApprovalScreen();
+  ensureStandaloneNav();
   updateUserBadge();
+}
+
+function toggleMobileNav() {
+  var sidebar = document.querySelector('.app-sidebar');
+  if (!sidebar) return;
+  sidebar.classList.toggle('open');
+}
+
+function ensureStandaloneNav() {
+  try {
+    var sidebar = document.querySelector('.app-sidebar');
+    if (sidebar && window.innerWidth >= 1024) sidebar.classList.remove('open');
+  } catch (e) { /* ignore */ }
 }
 
 function updateUserBadge() {
@@ -108,12 +123,29 @@ function updateUserBadge() {
     userBar.classList.add('hidden');
     userBar.style.display = 'none';
   }
+  // Update admin nav visibility
+  updateAdminNavVisibility();
+}
+
+function updateAdminNavVisibility() {
+  var adminNav = document.getElementById('btn-admin');
+  if (!adminNav) return;
+  if (currentUserRole === 'admin') {
+    adminNav.classList.remove('hidden');
+  } else {
+    adminNav.classList.add('hidden');
+  }
 }
 
 function clearUserState() {
   currentUserRole = null;
   currentUserName = '';
   currentUserId = null;
+  // Close sidebar and hide admin nav
+  var sidebar = document.querySelector('.app-sidebar');
+  if (sidebar) sidebar.classList.remove('open');
+  var adminNav = document.getElementById('btn-admin');
+  if (adminNav) adminNav.classList.add('hidden');
   updateUserBadge();
   if (typeof stopPendingUsersListener === 'function') {
     stopPendingUsersListener();

@@ -1,16 +1,14 @@
 var _pendingUsersListener = null;
 
 function initAdminPanel() {
-  var panel = document.getElementById('adminPanel');
-  if (!panel) return;
+  var adminView = document.getElementById('view-admin');
+  if (!adminView) return;
 
   if (!isAdmin()) {
-    panel.classList.add('hidden');
     stopPendingUsersListener();
     return;
   }
 
-  panel.classList.remove('hidden');
   if (_pendingUsersListener) return;
 
   _pendingUsersListener = db.collection('users')
@@ -29,8 +27,8 @@ function stopPendingUsersListener() {
 }
 
 function renderPendingRequests(docs) {
-  var tbody = document.getElementById('pendingUsersBody');
-  var empty = document.getElementById('adminPanelEmpty');
+  var tbody = document.getElementById('pendingUsersBodyAdmin');
+  var empty = document.getElementById('adminPanelEmptyAdmin');
   if (!tbody || !empty) return;
 
   if (!docs.length) {
