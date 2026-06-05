@@ -102,6 +102,8 @@ function openAddBooking() {
   document.getElementById('modalTitle').textContent = 'New Booking';
   document.getElementById('f-name').value = '';
   document.getElementById('f-phone').value = '';
+  document.getElementById('f-idProof').value = '';
+  document.getElementById('f-address').value = '';
 
   document.getElementById('f-roomCount').value = 1;
 
@@ -128,6 +130,8 @@ function editBooking(id) {
   document.getElementById('modalTitle').textContent = 'Edit Booking';
   document.getElementById('f-name').value = b.name;
   document.getElementById('f-phone').value = b.phone;
+  document.getElementById('f-idProof').value = b.idProof || '';
+  document.getElementById('f-address').value = b.address || '';
   document.getElementById('f-type').value = b.type;
   document.getElementById('f-checkin').value = b.checkin;
   document.getElementById('f-checkout').value = b.checkout;
@@ -154,6 +158,8 @@ function editBooking(id) {
 function saveBooking() {
   var name     = document.getElementById('f-name').value.trim();
   var phone    = document.getElementById('f-phone').value.trim();
+  var idProof  = document.getElementById('f-idProof').value.trim();
+  var address  = document.getElementById('f-address').value.trim();
 
   var selectedRooms = Array.from(
     document.querySelectorAll('.roomCheck:checked')
@@ -166,7 +172,7 @@ function saveBooking() {
   var mode     = document.getElementById('f-mode').value;
   var status   = document.getElementById('f-status').value;
 
-  if (!name || !phone || !checkin || !checkout || !amount) {
+  if (!name || !phone || !idProof || !address || !checkin || !checkout || !amount) {
     alert('Please fill all fields.');
     return;
   }
@@ -204,6 +210,8 @@ function saveBooking() {
   var data = {
     name:name,
     phone:phone,
+    idProof:idProof,
+    address:address,
     rooms:selectedRooms,
     type:type,
     checkin:checkin,
@@ -290,6 +298,8 @@ function downloadReceipt(id) {
   var rows = [
     ['Guest Name', b.name],
     ['Phone', b.phone],
+    ['ID Proof', b.idProof || '-'],
+    ['Address', b.address || '-'],
     [
       'Rooms',
       (b.rooms || [b.room]).join(', ') + ' (' + b.type + ')'
@@ -301,8 +311,10 @@ function downloadReceipt(id) {
   pdf.setFontSize(8.5); pdf.setFont('helvetica','normal');
   rows.forEach(function(r){
     pdf.setTextColor(120,120,120); pdf.text(r[0]+':', pad, y);
-    pdf.setTextColor(30,30,30); pdf.text(r[1], pad+45, y);
-    y+=6;
+    pdf.setTextColor(30,30,30);
+    var valueLines = pdf.splitTextToSize(String(r[1] || '-'), W - pad - (pad+45));
+    pdf.text(valueLines, pad+45, y);
+    y += Math.max(6, valueLines.length * 5);
   });
 
   y+=3; pdf.setDrawColor(220,220,215); pdf.line(pad,y,W-pad,y); y+=8;
